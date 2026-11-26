@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="联名日历：每天的品牌联名与优惠活动，一本大家共享的日历。">
-<title>联名日历 · 今天有什么联名</title>
+<meta name="description" content="活动日历：每天的品牌联名、优惠活动与新品上新，一本大家共享的日历。">
+<title>活动日历 · 今天有什么活动</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,12 +13,12 @@
 <header class="masthead">
   <div class="masthead-inner">
     <div class="date-card" id="dateCard">
-      <div class="date-card-top">联名日历</div>
+      <div class="date-card-top">活动日历</div>
       <div class="date-card-day" id="bigDay">--</div>
       <div class="date-card-meta" id="bigMeta">--月 --日 · 星期--</div>
     </div>
     <div class="masthead-text">
-      <h1>今天有什么联名</h1>
+      <h1>今天有什么活动</h1>
       <p class="masthead-sub" id="todaySummary">正在打开日历…</p>
       <p class="masthead-note">每天早上自动搜集全网新活动 · 数据由大家共同投稿维护</p>
     </div>
@@ -155,7 +155,7 @@
 </main>
 
 <footer class="footer">
-  <p>联名日历 · 活动信息来自公开报道与网友投稿，请以品牌官方页面为准。</p>
+  <p>活动日历 · 活动信息来自公开报道与网友投稿，请以品牌官方页面为准。</p>
   <p>数据更新：每天早上 8 点自动 AI 搜集（按 README 开启后生效）+ 大家投稿和手动补录。</p>
 </footer>
 
@@ -365,7 +365,7 @@
 <div class="modal-backdrop" id="authModal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
     <button class="modal-close" data-close="authModal" aria-label="关闭">×</button>
-    <h2 id="authTitle">登录联名日历</h2>
+    <h2 id="authTitle">登录活动日历</h2>
     <p class="modal-hint" id="authHint">登录后，你的购买记录会同步到云端，换设备也能看到。看日历和投稿不需要登录，任何人都能看、能投。</p>
     <p class="prefill-note" id="authDemoNote" hidden>演示模式：还没有配置 Supabase，登录暂不可用。请先按 README 配置好 Supabase 再回来登录。</p>
     <p class="prefill-note" id="authLoadNote" hidden>登录组件加载失败（supabase-js 未加载），请检查网络后刷新页面重试。</p>

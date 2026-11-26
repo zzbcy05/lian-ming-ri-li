@@ -1,4 +1,4 @@
-/* 联名日历 · 前端逻辑（纯静态，无构建步骤）
+/* 活动日历 · 前端逻辑（纯静态，无构建步骤）
  *
  * 数据源：
  * - 已配置 Supabase（config.js 里填了真实 URL 和 anon key）：
@@ -435,7 +435,7 @@
     authMode = mode;
     $('authTabLogin').classList.toggle('active', mode === 'login');
     $('authTabRegister').classList.toggle('active', mode === 'register');
-    $('authTitle').textContent = mode === 'login' ? '登录联名日历' : '注册新账号';
+    $('authTitle').textContent = mode === 'login' ? '登录活动日历' : '注册新账号';
     $('authHint').textContent = mode === 'login'
       ? '登录后，你的购买记录会同步到云端，换设备也能看到。看日历和投稿不需要登录，任何人都能看、能投。'
       : '注册一个账号，购买记录就能同步到云端。邮箱只用来登录，不会公开显示。';

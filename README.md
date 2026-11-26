@@ -1,8 +1,8 @@
-# 联名日历 · 独立部署版
+# 活动日历 · 独立部署版
 
 每天的奶茶咖啡联名与优惠活动，一本大家共享的日历。
 
-这是联名日历的可部署版本（独立代码，不依赖 Muse）：静态前端 + Supabase 免费数据库。
+这是活动日历的可部署版本（独立代码，不依赖 Muse）：静态前端 + Supabase 免费数据库。
 部署上线后，所有人打开同一个网址，看到的是同一本日历；任何人投稿的活动，所有人都能看到。
 
 ## 功能
@@ -55,7 +55,7 @@ python3 -m http.server 8000
    ```bash
    git init
    git add .
-   git commit -m "联名日历独立部署版 v1"
+   git commit -m "活动日历独立部署版 v1"
    git branch -M main
    git remote add origin https://github.com/你的用户名/lian-ming-ri-li.git
    git push -u origin main
@@ -123,7 +123,7 @@ anon key 是公开可用的前端密钥（配合 RLS 策略使用），放在前
 
 ### 手动触发测试一次
 
-配好 Secrets 后不用等到明天早上：仓库页面 → **Actions** → 左侧选 **每日搜集联名情报** → **Run workflow**。等一两分钟，看日志确认写入了几条新活动，再打开网站检查。
+配好 Secrets 后不用等到明天早上：仓库页面 → **Actions** → 左侧选 **每日搜集活动情报** → **Run workflow**。等一两分钟，看日志确认写入了几条新活动，再打开网站检查。
 
 本地也可以先模拟测试（不调任何 API、不写库）：
 
