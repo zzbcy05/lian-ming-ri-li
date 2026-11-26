@@ -845,8 +845,8 @@
     openModal('purchaseModal');
   }
 
-  /* ================= 投稿：从链接预填（诚实版） ================= */
-  // 只根据域名判断平台，不假装能读到页面正文。
+  /* ================= 投稿：从链接预填 ================= */
+  // 服务端（/api/prefill）抓取公开页面填标题 / 简介 / 日期；需登录的站读不到，只认平台、不假装。
   var PLATFORM_MAP = [
     [/weibo\.com|weibo\.cn/, '微博'],
     [/xiaohongshu\.com|xhslink\.com/, '小红书'],
@@ -1058,10 +1058,11 @@
       });
     });
 
-    // 投稿：从链接预填
+    // 投稿：从链接预填（服务端抓取公开页面）
     $('prefillBtn').addEventListener('click', function () {
       var url = $('subUrl').value.trim();
       var note = $('prefillNote');
+      var btn = $('prefillBtn');
       if (!url) {
         note.textContent = '请先粘贴活动链接。';
         note.hidden = false;
@@ -1073,9 +1074,32 @@
         return;
       }
       var platform = platformOf(url);
-      note.textContent = '已识别来源：' + platform +
-        '。浏览器无法直接读取该页面的正文，请手动确认品牌、活动名和日期，核对无误后发布。';
+      btn.disabled = true;
+      btn.textContent = '识别中…';
+      note.textContent = '正在识别「' + platform + '」页面内容…';
       note.hidden = false;
+      fetch('/api/prefill?url=' + encodeURIComponent(url))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data || !data.ok) {
+            note.textContent = (data && data.message) || '识别失败，请手动填写品牌、活动名和日期。';
+            return;
+          }
+          var filled = [];
+          if (data.title && !$('subTitle').value.trim()) { $('subTitle').value = data.title; filled.push('活动名'); }
+          if (data.description && !$('subDesc').value.trim()) { $('subDesc').value = data.description; filled.push('简介'); }
+          if (data.date && !$('subStart').value) { $('subStart').value = data.date; filled.push('开始日期'); }
+          note.textContent = filled.length
+            ? '已识别来源：' + platform + '，自动填好了' + filled.join('、') + '。请核对品牌、品类等信息，确认无误后发布。'
+            : '已识别来源：' + platform + '，但页面里没找到能填的内容，请手动填写品牌、活动名和日期。';
+        })
+        .catch(function () {
+          note.textContent = '识别服务暂时不可用，请手动填写品牌、活动名和日期。';
+        })
+        .finally(function () {
+          btn.disabled = false;
+          btn.textContent = '从链接预填';
+        });
     });
 
     // 投稿提交
