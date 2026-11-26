@@ -1,4 +1,4 @@
-# 联名日历 · 每天自动搜集新联名（全免费路线）
+# 活动日历 · 每天自动搜集新活动（全免费路线）
 #
 # 每天 00:00 UTC（北京时间 08:00）运行一次，也可手动触发。
 # 流程：Tavily 免费搜索 → Gemini 免费版整理 → 校验去重后写入 Supabase。
@@ -9,7 +9,7 @@
 #   SUPABASE_URL               Supabase 项目 URL
 #   SUPABASE_SERVICE_ROLE_KEY  Supabase service_role key（只放 Secrets，绝不进代码）
 # 详见 README「自动搜集设置」一节。没配 key 时任务会失败退出，但网站本身完全不受影响。
-name: 每日搜集联名情报
+name: 每日搜集活动情报
 
 on:
   schedule:
