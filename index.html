@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="联名日历：每天的奶茶咖啡联名与优惠活动，一本大家共享的日历。">
+<meta name="description" content="联名日历：每天的品牌联名与优惠活动，一本大家共享的日历。">
 <title>联名日历 · 今天有什么联名</title>
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -37,6 +37,7 @@
   <button class="tab active" data-view="today" role="tab" aria-selected="true">今日活动</button>
   <button class="tab" data-view="calendar" role="tab" aria-selected="false">纵览日历</button>
   <button class="tab" data-view="mine" role="tab" aria-selected="false">我购买的</button>
+  <button class="tab" data-view="new" role="tab" aria-selected="false">上新</button>
 </nav>
 
 <main class="container">
@@ -56,6 +57,16 @@
           <option value="奶茶">奶茶</option>
           <option value="咖啡">咖啡</option>
           <option value="综合">综合</option>
+          <option value="餐饮快餐">餐饮快餐</option>
+          <option value="零食饮料">零食饮料</option>
+          <option value="潮玩文创">潮玩文创</option>
+          <option value="美妆个护">美妆个护</option>
+          <option value="服饰鞋包">服饰鞋包</option>
+          <option value="数码家电">数码家电</option>
+          <option value="零售便利">零售便利</option>
+          <option value="游戏文娱">游戏文娱</option>
+          <option value="生活日用">生活日用</option>
+          <option value="其他">其他</option>
         </select>
       </label>
       <label class="search-box">
@@ -93,6 +104,7 @@
     <div class="cal-legend">
       <span><i class="dot dot-collab"></i>联名</span>
       <span><i class="dot dot-promo"></i>优惠</span>
+      <span><i class="dot dot-new"></i>新品</span>
       <span><i class="dot dot-user"></i>网友投稿</span>
     </div>
     <div class="calendar" id="calendarGrid"></div>
@@ -120,6 +132,16 @@
     <p class="mine-note" id="mineNote">未登录：购买记录只保存在这台浏览器里。登录后会同步到云端，换设备也能看到。</p>
     <div class="purchase-list" id="purchaseList"></div>
     <p class="empty" id="purchaseEmpty">还没有入手记录。从活动详情点「我买了」，或者手动记一笔吧。</p>
+  </section>
+
+  <!-- ===== 新品上新 ===== -->
+  <section class="view" id="view-new" role="tabpanel">
+    <div class="new-head">
+      <h2>新品上新</h2>
+      <p>刚发售的新东西——不是联名，也不是优惠，就是上新了。</p>
+    </div>
+    <div class="event-list" id="newList"></div>
+    <p class="empty" id="newEmpty" hidden>最近没有新品上新。</p>
   </section>
 
 </main>
@@ -176,6 +198,16 @@
             <option value="奶茶">奶茶</option>
             <option value="咖啡">咖啡</option>
             <option value="综合">综合</option>
+            <option value="餐饮快餐">餐饮快餐</option>
+            <option value="零食饮料">零食饮料</option>
+            <option value="潮玩文创">潮玩文创</option>
+            <option value="美妆个护">美妆个护</option>
+            <option value="服饰鞋包">服饰鞋包</option>
+            <option value="数码家电">数码家电</option>
+            <option value="零售便利">零售便利</option>
+            <option value="游戏文娱">游戏文娱</option>
+            <option value="生活日用">生活日用</option>
+            <option value="其他">其他</option>
           </select>
         </label>
       </div>
@@ -240,6 +272,16 @@
             <option value="奶茶">奶茶</option>
             <option value="咖啡">咖啡</option>
             <option value="综合">综合</option>
+            <option value="餐饮快餐">餐饮快餐</option>
+            <option value="零食饮料">零食饮料</option>
+            <option value="潮玩文创">潮玩文创</option>
+            <option value="美妆个护">美妆个护</option>
+            <option value="服饰鞋包">服饰鞋包</option>
+            <option value="数码家电">数码家电</option>
+            <option value="零售便利">零售便利</option>
+            <option value="游戏文娱">游戏文娱</option>
+            <option value="生活日用">生活日用</option>
+            <option value="其他">其他</option>
           </select>
         </label>
       </div>

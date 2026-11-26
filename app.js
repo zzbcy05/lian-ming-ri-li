@@ -110,6 +110,15 @@
       source_url: 'https://post.smzdm.com/p/a03xw7d0/',
       order_name: '瑞幸咖啡', order_hint: '微信搜索「瑞幸咖啡」小程序点单',
       origin: 'seed', source_label: null
+    },
+    {
+      id: 'demo-09', title: '泡泡玛特 DIMOO 双线新品开售', brand: '泡泡玛特', partner: null,
+      type: 'new', category: '潮玩文创', start_date: '2026-11-05', end_date: null,
+      description: '11 月 5 日晚三线齐发：DIMOO「飞行幻想」手办盲盒单盒 69 元（12 常规 + 1 隐藏）、DIMOO「今日心情预报」搪胶毛绒盲盒单只 129 元（6 常规 + 1 隐藏），线下门店 11 月 6 日跟进。是 Q3 财报后首个非 LABUBU IP 的接棒测试。',
+      price_note: null,
+      source_url: 'https://ibtefair.com/NewsDetail/9218540.html',
+      order_name: '泡泡玛特官方渠道', order_hint: '泡泡玛特线上官方渠道或线下门店购买',
+      origin: 'seed', source_label: null
     }
   ];
 
@@ -162,7 +171,11 @@
     return 'active';
   }
 
-  function typeLabel(t) { return t === 'promo' ? '优惠' : '联名'; }
+  function typeLabel(t) {
+    if (t === 'promo') return '优惠';
+    if (t === 'new') return '新品';
+    return '联名';
+  }
 
   function stampText(brand) {
     var b = (brand || '?').replace(/\s/g, '');
@@ -545,6 +558,7 @@
     var q = state.search.trim().toLowerCase();
     return state.events
       .filter(function (ev) { return isActiveOn(ev, today); })
+      .filter(function (ev) { return ev.type !== 'new'; })
       .filter(function (ev) {
         if (state.typeFilter !== 'all' && ev.type !== state.typeFilter) return false;
         if (state.categoryFilter !== 'all' && ev.category !== state.categoryFilter) return false;
@@ -566,7 +580,8 @@
     var today = todayStr();
     var st = statusOf(ev, today);
     var start = parseDate(ev.start_date);
-    var badges = '<span class="badge badge-' + (ev.type === 'promo' ? 'promo' : 'collab') + '">' +
+    var typeCls = ev.type === 'promo' ? 'promo' : (ev.type === 'new' ? 'new' : 'collab');
+    var badges = '<span class="badge badge-' + typeCls + '">' +
       typeLabel(ev.type) + '</span>';
     if (ev.origin === 'user' || ev.source_label) {
       badges += '<span class="badge badge-user">' + esc(ev.source_label || '网友投稿') + '</span>';
@@ -598,11 +613,15 @@
 
   function renderToday() {
     var today = todayStr();
-    var active = state.events.filter(function (ev) { return isActiveOn(ev, today); });
+    var active = state.events.filter(function (ev) {
+      return isActiveOn(ev, today) && ev.type !== 'new';
+    });
     var ending = active.filter(function (ev) { return ev.end_date === today; });
 
     // 顶部摘要
-    var upcomingCount = state.events.filter(function (ev) { return ev.start_date > today; }).length;
+    var upcomingCount = state.events.filter(function (ev) {
+      return ev.start_date > today && ev.type !== 'new';
+    }).length;
     $('todaySummary').textContent = '今天 ' + active.length + ' 个活动进行中' +
       (ending.length ? ' · ' + ending.length + ' 个今日截止' : '') +
       (upcomingCount ? ' · ' + upcomingCount + ' 个即将上线' : '');
@@ -620,6 +639,15 @@
     var list = filteredTodayEvents();
     $('todayList').innerHTML = list.map(eventRowHTML).join('');
     $('todayEmpty').hidden = list.length > 0;
+  }
+
+  /* ================= 渲染：新品上新 ================= */
+  function renderNew() {
+    var list = state.events
+      .filter(function (ev) { return ev.type === 'new'; })
+      .sort(function (a, b) { return a.start_date < b.start_date ? 1 : -1; });
+    $('newList').innerHTML = list.map(eventRowHTML).join('');
+    $('newEmpty').hidden = list.length > 0;
   }
 
   /* ================= 渲染：纵览日历 ================= */
@@ -668,7 +696,7 @@
       var dots = '';
       var seen = {};
       evs.slice(0, 3).forEach(function (ev) {
-        var cls = ev.origin === 'user' ? 'dot-user' : (ev.type === 'promo' ? 'dot-promo' : 'dot-collab');
+        var cls = ev.origin === 'user' ? 'dot-user' : (ev.type === 'promo' ? 'dot-promo' : (ev.type === 'new' ? 'dot-new' : 'dot-collab'));
         if (!seen[cls]) { seen[cls] = true; dots += '<i class="dot ' + cls + '"></i>'; }
       });
       var classes = 'cal-day' +
@@ -728,6 +756,7 @@
 
   function renderAll() {
     renderToday();
+    renderNew();
     renderCalendar();
     renderPurchases();
   }
@@ -751,7 +780,8 @@
     if (!ev) return;
     var today = todayStr();
     var st = statusOf(ev, today);
-    var badges = '<span class="badge badge-' + (ev.type === 'promo' ? 'promo' : 'collab') + '">' +
+    var typeCls = ev.type === 'promo' ? 'promo' : (ev.type === 'new' ? 'new' : 'collab');
+    var badges = '<span class="badge badge-' + typeCls + '">' +
       typeLabel(ev.type) + '</span><span class="badge badge-upcoming">' + esc(ev.category) + '</span>';
     if (ev.origin === 'user' || ev.source_label) {
       badges += '<span class="badge badge-user">' + esc(ev.source_label || '网友投稿') + '</span>';
@@ -868,6 +898,7 @@
     });
     if (view === 'calendar') renderCalendar();
     if (view === 'mine') renderPurchases();
+    if (view === 'new') renderNew();
   }
 
   function initHeader() {
