@@ -664,3 +664,6 @@ body {
   .field-row { flex-direction: column; gap: 0; }
   .spend-total { font-size: 26px; }
 }
+
+/* 修复：.demo-banner 的 display:flex 会盖过 hidden 属性，导致演示横条在在线模式下也一直显示；与 .modal-backdrop[hidden] 的写法保持一致 */
+.demo-banner[hidden] { display: none; }
