@@ -4,13 +4,13 @@
 *
 * 每天由 GitHub Actions 定时运行一次（见.github/workflows/daily-collect.yml），
 * 流程分三步：
-* 1) 搜：调 Tavily 搜索 API（免费额度），搜最近一周的奶茶 / 咖啡联名与优惠新闻；
+* 1) 搜：调 Tavily 搜索 API（免费额度），搜最近一周的品牌联名、优惠与新品发售新闻；
 * 2) 理：调 Google Gemini API 免费版，把搜索结果整理成结构化活动；
 * 3) 写：严格校验 + 去重后，写入 Supabase events 表（service_role key 走 REST）。
 *
 * 全免费说明（2026-11-19 核实，额度以官方页面为准）：
 * - Tavily 免费版每月 1000 credits，不用绑卡；basic 搜索 1 credit/次。
-* 本脚本每天 4 条查询，每月约 120 次，远在额度内。用完当月停搜，下月 1 号重置。
+* 本脚本每天 10 条查询，每月约 300 次，远在额度内。用完当月停搜，下月 1 号重置。
 * https://tavily.com
 * - Gemini API 免费版不用绑卡；本脚本每天只调 1 次，远在免费额度内。
 * 具体限额 Google 不再公布固定数字，以 AI Studio 里显示的为准。
@@ -38,12 +38,18 @@
 // ================= 配置区（想改搜集范围、查询词、模型，只改这里） =================
 const CONFIG = {
 // 搜索查询词：每天跑一次，每条查询消耗 1 个 Tavily credit。
-// 4 条查询 × 30 天 ≈ 120 credits/月，Tavily 免费额度每月 1000 credits，绰绰有余。
+// 10 条查询 × 30 天 ≈ 300 credits/月，Tavily 免费额度每月 1000 credits，仍在额度内。
 QUERIES: [
 '奶茶 联名 新品 活动',
 '咖啡 联名 限定 活动',
 '奶茶 买一送一 优惠',
 '喜茶 瑞幸 霸王茶姬 奈雪 新联名',
+'肯德基 麦当劳 买一送一 优惠',
+'零食饮料 联名 限定 新品',
+'泡泡玛特 潮玩 联名 新品',
+'美妆 联名 限定 系列',
+'服饰 鞋包 联名 发售',
+'数码 家电 双11 优惠',
 ],
 DAYS_BACK: 7, // 只搜最近一周内的新闻（Tavily time_range=week）
 SEARCH_RESULTS_PER_QUERY: 8, // 每条查询取几条结果
@@ -64,7 +70,7 @@ MAX_EVENTS_PER_RUN: 20, // 一次最多写入几条，避免某天异常刷屏
 };
 
 // 品类白名单：模型输出不在此列的一律归为「综合」
-const CATEGORIES = ['奶茶', '咖啡', '综合'];
+const CATEGORIES = ['奶茶', '咖啡', '综合', '餐饮快餐', '零食饮料', '潮玩文创', '美妆个护', '服饰鞋包', '数码家电', '零售便利', '游戏文娱', '生活日用', '其他'];
 
 // ================= 模拟数据（仅 --mock 测试用，明显是假的，绝不会写库） =================
 const MOCK_SEARCH_RESULTS = [
@@ -227,7 +233,7 @@ const numbered = results.map((r, i) =>
 `[${i + 1}] 标题：${r.title}\n 链接：${r.url}\n 日期：${r.published_date || '未知'}\n 摘要：${r.content}`
 ).join('\n\n');
 
-return `你是一个联名活动整理助手。下面是最近一周奶茶 / 咖啡联名与优惠活动的搜索结果，请把它们整理成活动列表。
+return `你是一个联名活动整理助手。下面是最近一周品牌联名、优惠活动与新品发售的搜索结果，请把它们整理成活动列表。
 
 搜索结果：
 ${numbered}
@@ -238,18 +244,18 @@ ${numbered}
 - title（必填）：活动名，如「喜茶 × 合味道「喜茶面馆」」
 - brand（必填）：品牌，如「喜茶」
 - partner（可空）：联名对象，如「合味道」；纯优惠活动填 null
-- type（必填）：只能是 "collab"（联名）或 "promo"（优惠活动）
-- category（必填）：只能是 "奶茶"、"咖啡"、"综合" 三者之一
+- type（必填）：只能是 "collab"（联名）、"promo"（优惠活动）或 "new"（新品发售）；新品发售指没有联名对象、没有优惠、只是新产品上市
+- category（必填）：只能是 "奶茶"、"咖啡"、"综合"、"餐饮快餐"、"零食饮料"、"潮玩文创"、"美妆个护"、"服饰鞋包"、"数码家电"、"零售便利"、"游戏文娱"、"生活日用"、"其他" 之一（共 13 个）
 - start_date（必填）：开始日期，格式 YYYY-MM-DD；未知则填搜索结果里的发布日期
 - end_date（可空）：结束日期，格式 YYYY-MM-DD；未知或售完即止填 null
 - description（必填）：一两句话介绍活动内容，只写搜索结果里提到的信息
 - price_note（可空）：价格信息，如「单品 ¥22」；没提到填 null
 - source_url（必填）：来源链接，必须从上面搜索结果里逐字复制，绝不能编造、绝不能改写
-- order_name（可空）：点单小程序/ App 名称，如「喜茶GO」；没提到填 null
+- order_name（可空）：购买入口名称，如「喜茶GO」「小米商城 mi.com」；没提到填 null
 3. source_url 必须能在上面的搜索结果里找到原文；找不到来源的活动直接丢弃，不要输出。
 4. 不要编造任何信息：日期、价格、联名对象，搜索结果里没有就填 null 或合理留空，绝不猜测。
 5. 同一活动在多个搜索结果里出现时只保留一条（选信息最全的那条）。
-6. 不是奶茶 / 咖啡联名或优惠的活动不要输出；已经明确结束的活动不要输出。
+6. 不是品牌联名、优惠活动或新品发售的不要输出；已经明确结束的活动不要输出。
 7. 最多输出 ${CONFIG.MAX_EVENTS_PER_RUN} 条。`;
 }
 
@@ -285,7 +291,7 @@ headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}`
 body: JSON.stringify({
 model,
 messages: [
-{ role: 'system', content: '你是一个联名活动整理助手，只输出 JSON 数组。' },
+{ role: 'system', content: '你是一个联名活动整理助手，只输出 JSON 数组。'},
 { role: 'user', content: prompt},
 ],
 temperature: 0.2,
@@ -328,7 +334,7 @@ valid.push({
 title: title.slice(0, 60),
 brand: brand.slice(0, 20),
 partner: ev.partner? String(ev.partner).trim().slice(0, 30): null,
-type: ev.type === 'promo'? 'promo': 'collab',
+type: (ev.type === 'promo' || ev.type === 'bogo')? 'promo': (ev.type === 'new'? 'new': 'collab'),
 category: CATEGORIES.includes(ev.category)? ev.category: '综合',
 start_date: start,
 end_date: end && end >= start? end: null,
@@ -336,7 +342,7 @@ description: String(ev.description || '').trim().slice(0, 500) || '详情见来�
 price_note: ev.price_note? String(ev.price_note).trim().slice(0, 60): null,
 source_url: sourceUrl,
 order_name: ev.order_name? String(ev.order_name).trim().slice(0, 30): null,
-order_hint: ev.order_name? `微信搜索「${String(ev.order_name).trim().slice(0, 30)}」小程序点单`: null,
+order_hint: ev.order_name? `在「${String(ev.order_name).trim().slice(0, 30)}」购买`: null,
 origin: 'auto',
 source_label: '自动搜集',
 });
@@ -413,7 +419,7 @@ log(`⚠️ submissions 记录失败（不影响已写入的活动）：${e.mess
 // ================= 主流程 =================
 async function main() {
 const args = parseArgs(process.argv.slice(2));
-if (args.help) { printHelp(); return; }
+if (args.help) { printHelp(); return;}
 
 const env = process.env;
 const provider = (env.LLM_PROVIDER || CONFIG.LLM_PROVIDER).toLowerCase();
