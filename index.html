@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="联名日历：每天的奶茶咖啡联名与优惠活动，一本大家共享的日历。">
+<title>联名日历 · 今天有什么联名</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ===== 顶部：撕页台历 ===== -->
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="date-card" id="dateCard">
+      <div class="date-card-top">联名日历</div>
+      <div class="date-card-day" id="bigDay">--</div>
+      <div class="date-card-meta" id="bigMeta">--月 --日 · 星期--</div>
+    </div>
+    <div class="masthead-text">
+      <h1>今天有什么联名</h1>
+      <p class="masthead-sub" id="todaySummary">正在打开日历…</p>
+      <p class="masthead-note">每天早上自动搜集全网新活动 · 数据由大家共同投稿维护</p>
+    </div>
+    <div class="auth-area" id="authArea"></div>
+  </div>
+</header>
+
+<!-- 演示模式提示条（已配置 Supabase 后自动隐藏） -->
+<div class="demo-banner" id="demoBanner" hidden>
+  <span>演示模式：还没有配置 Supabase，现在显示的是本地示例数据，投稿和新增只保存在这台浏览器里。</span>
+  <a href="README.md" target="_blank" rel="noopener">查看配置方法</a>
+</div>
+
+<!-- ===== 导航 ===== -->
+<nav class="tabs" role="tablist" aria-label="页面导航">
+  <button class="tab active" data-view="today" role="tab" aria-selected="true">今日活动</button>
+  <button class="tab" data-view="calendar" role="tab" aria-selected="false">纵览日历</button>
+  <button class="tab" data-view="mine" role="tab" aria-selected="false">我购买的</button>
+</nav>
+
+<main class="container">
+
+  <!-- ===== 今日活动 ===== -->
+  <section class="view active" id="view-today" role="tabpanel">
+    <div class="toolbar">
+      <div class="chips" id="typeChips" role="group" aria-label="按类型筛选">
+        <button class="chip active" data-type="all">全部</button>
+        <button class="chip" data-type="collab">联名</button>
+        <button class="chip" data-type="promo">优惠</button>
+      </div>
+      <label class="cat-select">
+        <span class="sr-only">按品类筛选</span>
+        <select id="categoryFilter">
+          <option value="all">全部品类</option>
+          <option value="奶茶">奶茶</option>
+          <option value="咖啡">咖啡</option>
+          <option value="综合">综合</option>
+        </select>
+      </label>
+      <label class="search-box">
+        <span class="sr-only">搜索活动</span>
+        <input type="search" id="searchInput" placeholder="搜品牌 / 活动名…" autocomplete="off">
+      </label>
+    </div>
+
+    <div class="ending-soon" id="endingSoon" hidden></div>
+
+    <div class="event-list" id="todayList"></div>
+    <p class="empty" id="todayEmpty" hidden>今天没有符合条件的活动，换个筛选试试，或者去投稿一个吧。</p>
+
+    <!-- 投稿入口 -->
+    <div class="submit-cta">
+      <div>
+        <h2>投稿一个活动</h2>
+        <p>小众奶茶搜不到？贴一个微博 / 小红书 / 公众号 / 新闻链接，确认信息后发布，所有人都能在日历上看到。</p>
+      </div>
+      <button class="btn btn-primary" id="openSubmitBtn">我要投稿</button>
+    </div>
+  </section>
+
+  <!-- ===== 纵览日历 ===== -->
+  <section class="view" id="view-calendar" role="tabpanel">
+    <div class="cal-head">
+      <button class="btn btn-ghost" id="calPrev" aria-label="上一个月 / 上一周">‹</button>
+      <h2 class="cal-title" id="calTitle">--</h2>
+      <button class="btn btn-ghost" id="calNext" aria-label="下一个月 / 下一周">›</button>
+      <div class="seg" role="group" aria-label="视图切换">
+        <button class="seg-btn active" data-mode="month">月</button>
+        <button class="seg-btn" data-mode="week">周</button>
+      </div>
+    </div>
+    <div class="cal-legend">
+      <span><i class="dot dot-collab"></i>联名</span>
+      <span><i class="dot dot-promo"></i>优惠</span>
+      <span><i class="dot dot-user"></i>网友投稿</span>
+    </div>
+    <div class="calendar" id="calendarGrid"></div>
+
+    <div class="day-detail">
+      <div class="day-detail-head">
+        <h3 id="dayDetailTitle">点一个日期查看当天活动</h3>
+        <button class="btn btn-small" id="openAddBtn">手动补录活动</button>
+      </div>
+      <div class="event-list" id="dayList"></div>
+      <p class="empty" id="dayEmpty" hidden>这一天暂无活动。</p>
+    </div>
+  </section>
+
+  <!-- ===== 我购买的 ===== -->
+  <section class="view" id="view-mine" role="tabpanel">
+    <div class="spend-band">
+      <div>
+        <div class="spend-label">累计花费</div>
+        <div class="spend-total" id="spendTotal">¥0</div>
+      </div>
+      <div class="spend-count" id="spendCount">0 笔入手记录</div>
+      <button class="btn btn-primary" id="openPurchaseBtn">手动记一笔</button>
+    </div>
+    <p class="mine-note" id="mineNote">未登录：购买记录只保存在这台浏览器里。登录后会同步到云端，换设备也能看到。</p>
+    <div class="purchase-list" id="purchaseList"></div>
+    <p class="empty" id="purchaseEmpty">还没有入手记录。从活动详情点「我买了」，或者手动记一笔吧。</p>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <p>联名日历 · 活动信息来自公开报道与网友投稿，请以品牌官方页面为准。</p>
+  <p>数据更新：每天早上 8 点自动 AI 搜集（按 README 开启后生效）+ 大家投稿和手动补录。</p>
+</footer>
+
+<!-- ===== 活动详情弹窗 ===== -->
+<div class="modal-backdrop" id="detailModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <button class="modal-close" data-close="detailModal" aria-label="关闭">×</button>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<!-- ===== 投稿弹窗 ===== -->
+<div class="modal-backdrop" id="submitModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="submitTitle">
+    <button class="modal-close" data-close="submitModal" aria-label="关闭">×</button>
+    <h2 id="submitTitle">投稿一个活动</h2>
+    <p class="modal-hint">贴一个微博 / 小红书 / 公众号 / 新闻链接。浏览器无法直接读取这些页面的内容，所以需要你确认并补填下面的信息，发布后立即登上共享日历。</p>
+    <form id="submitForm" novalidate>
+      <label class="field">
+        <span>活动链接 *</span>
+        <input type="url" id="subUrl" placeholder="https://…" required>
+      </label>
+      <button type="button" class="btn btn-ghost" id="prefillBtn">从链接预填</button>
+      <p class="prefill-note" id="prefillNote" hidden></p>
+      <label class="field">
+        <span>品牌 *</span>
+        <input type="text" id="subBrand" placeholder="如：喜茶" required maxlength="20">
+      </label>
+      <label class="field">
+        <span>联名对象（没有可留空）</span>
+        <input type="text" id="subPartner" placeholder="如：合味道" maxlength="30">
+      </label>
+      <label class="field">
+        <span>活动名 *</span>
+        <input type="text" id="subTitle" placeholder="如：喜茶 × 合味道「喜茶面馆」" required maxlength="60">
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>类型 *</span>
+          <select id="subType">
+            <option value="collab">联名</option>
+            <option value="promo">优惠活动</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>品类 *</span>
+          <select id="subCategory">
+            <option value="奶茶">奶茶</option>
+            <option value="咖啡">咖啡</option>
+            <option value="综合">综合</option>
+          </select>
+        </label>
+      </div>
+      <div class="field-row">
+        <label class="field">
+          <span>开始日期 *</span>
+          <input type="date" id="subStart" required>
+        </label>
+        <label class="field">
+          <span>结束日期（售完即止可留空）</span>
+          <input type="date" id="subEnd">
+        </label>
+      </div>
+      <label class="field">
+        <span>活动简介 *</span>
+        <textarea id="subDesc" rows="3" placeholder="简单介绍活动内容、玩法、价格…" required maxlength="500"></textarea>
+      </label>
+      <label class="field">
+        <span>价格信息（可选）</span>
+        <input type="text" id="subPrice" placeholder="如：单品 ¥22" maxlength="60">
+      </label>
+      <label class="field">
+        <span>点单小程序名称（可选）</span>
+        <input type="text" id="subOrder" placeholder="如：喜茶GO" maxlength="30">
+      </label>
+      <p class="form-error" id="submitError" hidden></p>
+      <button type="submit" class="btn btn-primary btn-block" id="submitBtn">发布到日历</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== 手动补录弹窗 ===== -->
+<div class="modal-backdrop" id="addModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+    <button class="modal-close" data-close="addModal" aria-label="关闭">×</button>
+    <h2 id="addTitle">手动补录活动</h2>
+    <p class="modal-hint">没有链接也没关系，直接把活动信息填进来，同样会登上共享日历。</p>
+    <form id="addForm" novalidate>
+      <label class="field">
+        <span>品牌 *</span>
+        <input type="text" id="addBrand" placeholder="如：喜茶" required maxlength="20">
+      </label>
+      <label class="field">
+        <span>联名对象（没有可留空）</span>
+        <input type="text" id="addPartner" placeholder="如：合味道" maxlength="30">
+      </label>
+      <label class="field">
+        <span>活动名 *</span>
+        <input type="text" id="addTitle" placeholder="如：喜茶 × 合味道「喜茶面馆」" required maxlength="60">
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>类型 *</span>
+          <select id="addType">
+            <option value="collab">联名</option>
+            <option value="promo">优惠活动</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>品类 *</span>
+          <select id="addCategory">
+            <option value="奶茶">奶茶</option>
+            <option value="咖啡">咖啡</option>
+            <option value="综合">综合</option>
+          </select>
+        </label>
+      </div>
+      <div class="field-row">
+        <label class="field">
+          <span>开始日期 *</span>
+          <input type="date" id="addStart" required>
+        </label>
+        <label class="field">
+          <span>结束日期（售完即止可留空）</span>
+          <input type="date" id="addEnd">
+        </label>
+      </div>
+      <label class="field">
+        <span>活动简介 *</span>
+        <textarea id="addDesc" rows="3" placeholder="简单介绍活动内容、玩法、价格…" required maxlength="500"></textarea>
+      </label>
+      <label class="field">
+        <span>来源链接（可选）</span>
+        <input type="url" id="addUrl" placeholder="https://…">
+      </label>
+      <label class="field">
+        <span>价格信息（可选）</span>
+        <input type="text" id="addPrice" placeholder="如：单品 ¥22" maxlength="60">
+      </label>
+      <label class="field">
+        <span>点单小程序名称（可选）</span>
+        <input type="text" id="addOrder" placeholder="如：喜茶GO" maxlength="30">
+      </label>
+      <p class="form-error" id="addError" hidden></p>
+      <button type="submit" class="btn btn-primary btn-block">发布到日历</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== 购买记录弹窗 ===== -->
+<div class="modal-backdrop" id="purchaseModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="purchaseTitle">
+    <button class="modal-close" data-close="purchaseModal" aria-label="关闭">×</button>
+    <h2 id="purchaseTitle">记一笔入手</h2>
+    <form id="purchaseForm" novalidate>
+      <input type="hidden" id="purId">
+      <input type="hidden" id="purEventId">
+      <label class="field">
+        <span>买了什么 *</span>
+        <input type="text" id="purTitle" placeholder="如：生打椰拉面" required maxlength="60">
+      </label>
+      <label class="field">
+        <span>品牌</span>
+        <input type="text" id="purBrand" placeholder="如：喜茶" maxlength="20">
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>价格（元）*</span>
+          <input type="number" id="purPrice" placeholder="22" min="0" step="0.01" required>
+        </label>
+        <label class="field">
+          <span>购买日期 *</span>
+          <input type="date" id="purDate" required>
+        </label>
+      </div>
+      <label class="field">
+        <span>备注（可选）</span>
+        <textarea id="purNote" rows="2" placeholder="如：抢到了拉面碗套餐！" maxlength="200"></textarea>
+      </label>
+      <p class="form-error" id="purchaseError" hidden></p>
+      <button type="submit" class="btn btn-primary btn-block">保存</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== 登录 / 注册弹窗 ===== -->
+<div class="modal-backdrop" id="authModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <button class="modal-close" data-close="authModal" aria-label="关闭">×</button>
+    <h2 id="authTitle">登录联名日历</h2>
+    <p class="modal-hint" id="authHint">登录后，你的购买记录会同步到云端，换设备也能看到。看日历和投稿不需要登录，任何人都能看、能投。</p>
+    <p class="prefill-note" id="authDemoNote" hidden>演示模式：还没有配置 Supabase，登录暂不可用。请先按 README 配置好 Supabase 再回来登录。</p>
+    <p class="prefill-note" id="authLoadNote" hidden>登录组件加载失败（supabase-js 未加载），请检查网络后刷新页面重试。</p>
+    <div class="seg auth-tabs" role="group" aria-label="登录或注册">
+      <button type="button" class="seg-btn active" id="authTabLogin">登录</button>
+      <button type="button" class="seg-btn" id="authTabRegister">注册</button>
+    </div>
+    <form id="authForm" novalidate>
+      <label class="field">
+        <span>邮箱 *</span>
+        <input type="email" id="authEmail" placeholder="you@example.com" required autocomplete="email">
+      </label>
+      <label class="field">
+        <span>密码 *（至少 6 位）</span>
+        <input type="password" id="authPassword" placeholder="至少 6 位" required minlength="6" autocomplete="current-password">
+      </label>
+      <p class="form-ok" id="authOk" hidden></p>
+      <p class="form-error" id="authError" hidden></p>
+      <button type="submit" class="btn btn-primary btn-block" id="authSubmitBtn">登录</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<!-- Supabase JS 客户端（只用于登录与购买记录云端同步；加载失败时网站其余功能照常可用） -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
