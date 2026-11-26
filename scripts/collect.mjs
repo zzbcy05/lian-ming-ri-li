@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
-* 联名日历 · 每日自动搜集新联名（全免费路线）
+* 活动日历 · 每日自动搜集新活动（全免费路线）
 *
 * 每天由 GitHub Actions 定时运行一次（见.github/workflows/daily-collect.yml），
 * 流程分三步：
@@ -139,7 +139,7 @@ return args;
 
 function printHelp() {
 console.log(`
-联名日历 · 每日自动搜集
+活动日历 · 每日自动搜集
 
 用法：
 node scripts/collect.mjs 正常跑一次（会写库）
@@ -426,7 +426,7 @@ const provider = (env.LLM_PROVIDER || CONFIG.LLM_PROVIDER).toLowerCase();
 const supabaseUrl = env.SUPABASE_URL || '';
 const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-log(`联名日历自动搜集开始（模式：${args.mock? '模拟数据': '真实 API'}${args.dryRun? ' + dry-run，不写库': ''}）`);
+log(`活动日历自动搜集开始（模式：${args.mock? '模拟数据': '真实 API'}${args.dryRun? ' + dry-run，不写库': ''}）`);
 
 if (!args.mock) {
 if (!env.TAVILY_API_KEY) throw new Error('缺少环境变量 TAVILY_API_KEY');
