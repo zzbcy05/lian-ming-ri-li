@@ -553,21 +553,23 @@
   }
 
   /* ================= 渲染：今日活动 ================= */
+  function passesListFilters(ev) {
+    var q = state.search.trim().toLowerCase();
+    if (state.typeFilter !== 'all' && ev.type !== state.typeFilter) return false;
+    if (state.categoryFilter !== 'all' && ev.category !== state.categoryFilter) return false;
+    if (q) {
+      var hay = ((ev.title || '') + ' ' + (ev.brand || '') + ' ' + (ev.partner || '')).toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  }
+
   function filteredTodayEvents() {
     var today = todayStr();
-    var q = state.search.trim().toLowerCase();
     return state.events
       .filter(function (ev) { return isActiveOn(ev, today); })
       .filter(function (ev) { return ev.type !== 'new'; })
-      .filter(function (ev) {
-        if (state.typeFilter !== 'all' && ev.type !== state.typeFilter) return false;
-        if (state.categoryFilter !== 'all' && ev.category !== state.categoryFilter) return false;
-        if (q) {
-          var hay = ((ev.title || '') + ' ' + (ev.brand || '') + ' ' + (ev.partner || '')).toLowerCase();
-          if (hay.indexOf(q) === -1) return false;
-        }
-        return true;
-      })
+      .filter(passesListFilters)
       .sort(function (a, b) {
         // 先按结束时间排（无结束日期的排后面），再按开始时间
         var ea = a.end_date || '9999-12-31', eb = b.end_date || '9999-12-31';
@@ -638,7 +640,16 @@
 
     var list = filteredTodayEvents();
     $('todayList').innerHTML = list.map(eventRowHTML).join('');
-    $('todayEmpty').hidden = list.length > 0;
+
+    // 即将开始（开始日期在今天之后，同样受类型/品类/搜索筛选）
+    var upcoming = state.events
+      .filter(function (ev) { return ev.start_date > today && ev.type !== 'new'; })
+      .filter(passesListFilters)
+      .sort(function (a, b) { return a.start_date < b.start_date ? -1 : 1; });
+    $('upcomingList').innerHTML = upcoming.map(eventRowHTML).join('');
+    $('upcomingWrap').hidden = upcoming.length === 0;
+
+    $('todayEmpty').hidden = list.length > 0 || upcoming.length > 0;
   }
 
   /* ================= 渲染：新品上新 ================= */
@@ -695,7 +706,7 @@
       var evs = eventsOn(ds);
       var dots = '';
       var seen = {};
-      evs.slice(0, 3).forEach(function (ev) {
+      evs.forEach(function (ev) {
         var cls = ev.origin === 'user' ? 'dot-user' : (ev.type === 'promo' ? 'dot-promo' : (ev.type === 'new' ? 'dot-new' : 'dot-collab'));
         if (!seen[cls]) { seen[cls] = true; dots += '<i class="dot ' + cls + '"></i>'; }
       });

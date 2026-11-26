@@ -398,6 +398,7 @@ body {
 .new-head { margin-bottom: 14px; }
 .new-head h2 { margin: 0 0 4px; font-size: 19px; }
 .new-head p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+.upcoming-wrap { margin-top: 24px; }
 
 /* ===== 按钮 ===== */
 .btn {
