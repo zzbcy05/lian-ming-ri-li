@@ -456,7 +456,9 @@ body {
 .cal-weekdays,
 .cal-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  /* minmax(0, 1fr)：列宽可以缩到 0，不会被格子里的文字（如“30 个活动”）撑开；
+     之前用 1fr 时，手机上每列会被撑到约 52px，7 列共 415px，超出屏幕。 */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
 }
 .cal-weekdays { margin-bottom: 4px; }
@@ -468,6 +470,7 @@ body {
   background: transparent;
   border-radius: 8px;
   min-height: 56px;
+  min-width: 0;
   padding: 6px 4px 4px;
   cursor: pointer;
   font: inherit;
@@ -672,7 +675,12 @@ body {
   .tab { padding: 8px 14px; font-size: 14px; }
   .event-row .date-col { flex-basis: 64px; }
   .date-col .dd { font-size: 20px; }
-  .cal-day { min-height: 48px; }
+  .cal-weekdays,
+  .cal-grid { gap: 2px; }
+  .cal-day { min-height: 48px; padding: 5px 2px 3px; }
+  .cal-day .dnum { font-size: 14px; }
+  /* 手机上格子约 46px 宽，活动数改成 9px 才能一行放下“30 个活动” */
+  .cal-count { font-size: 9px; line-height: 1.3; }
   .field-row { flex-direction: column; gap: 0; }
   .spend-total { font-size: 26px; }
 }
