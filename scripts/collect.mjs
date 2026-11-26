@@ -5,7 +5,8 @@
 * 每天由 GitHub Actions 定时运行一次（见.github/workflows/daily-collect.yml），
 * 流程分三步：
 * 1) 搜：调 Tavily 搜索 API（免费额度），搜最近一周的品牌联名、优惠与新品发售新闻；
-* 2) 理：调 Google Gemini API 免费版，把搜索结果整理成结构化活动；
+* 2) 理：调 Google Gemini API 免费版，把搜索结果整理成结构化活动
+* （模型临时过载 503/429 时自动重试，最多 3 次，间隔 60 秒、120 秒）；
 * 3) 写：严格校验 + 去重后，写入 Supabase events 表（service_role key 走 REST）。
 *
 * 全免费说明（2026-11-19 核实，额度以官方页面为准）：
@@ -185,6 +186,39 @@ return data;
 } finally {
 clearTimeout(timer);
 }
+}
+
+function sleep(ms) {
+return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// 判断一次失败是否值得重试：只重试临时性错误（模型过载 503、限流 429、
+// 5xx 服务端错误、网络超时/断连）。配置类错误（400/401/403/404）重试也没用。
+function isRetryableError(e) {
+const m = /HTTP (\d{3})/.exec((e && e.message) || '');
+if (m) {
+const status = Number(m[1]);
+return status === 429 || status >= 500;
+}
+return true; // 没有 HTTP 状态码（网络错误、超时）也当作临时问题
+}
+
+// 带重试的调用：最多 attempts 次；每次失败后按 delaysMs 里的时长等待再试。
+// 只有临时错误才重试；配置错误第一次失败就直接抛出，不浪费时间。
+async function withRetry(fn, label, attempts = 3, delaysMs = [60_000, 120_000]) {
+let lastError;
+for (let i = 1; i <= attempts; i++) {
+try {
+return await fn();
+} catch (e) {
+lastError = e;
+if (!isRetryableError(e) || i === attempts) throw e;
+const waitMs = delaysMs[i - 1] || delaysMs[delaysMs.length - 1];
+log(`⚠️ ${label}失败（${String(e.message).slice(0, 120)}），${Math.round(waitMs / 1000)} 秒后重试（第 ${i + 1}/${attempts} 次）…`);
+await sleep(waitMs);
+}
+}
+throw lastError;
 }
 
 // ================= 第 1 步：Tavily 搜索 =================
@@ -461,19 +495,27 @@ candidates = MOCK_LLM_EVENTS;
 log(`模拟整理：${candidates.length} 条候选活动`);
 } else {
 const prompt = buildPrompt(results);
+// 配置类问题先在这里检查出来（不进重试：重试也解决不了）
+let runModel;
 if (provider === 'gemini') {
 const model = env.GEMINI_MODEL || CONFIG.GEMINI_MODEL;
+runModel = async () => {
 log(`调用 Gemini（模型：${model}）整理…`);
-candidates = await callGemini(env.GEMINI_API_KEY, model, prompt);
+return callGemini(env.GEMINI_API_KEY, model, prompt);
+};
 } else if (provider === 'openai-compatible') {
 const baseUrl = env.LLM_BASE_URL || CONFIG.OPENAI_BASE_URL;
 const model = env.LLM_MODEL || CONFIG.OPENAI_MODEL;
 if (!baseUrl ||!model) throw new Error('OpenAI 兼容模式需要配置 LLM_BASE_URL 和 LLM_MODEL');
+runModel = async () => {
 log(`调用 OpenAI 兼容接口（模型：${model}）整理…`);
-candidates = await callOpenAiCompatible(env.LLM_API_KEY, baseUrl, model, prompt);
+return callOpenAiCompatible(env.LLM_API_KEY, baseUrl, model, prompt);
+};
 } else {
 throw new Error(`不支持的 LLM_PROVIDER：${provider}（可选：gemini / openai-compatible）`);
 }
+// 模型偶尔临时过载（503）时自动重试，最多 3 次，不用人工重跑
+candidates = await withRetry(runModel, '模型整理');
 log(`模型返回 ${candidates.length} 条候选活动`);
 }
 
