@@ -13,6 +13,6 @@
  *   显示内置的本地示例数据，投稿和新增只保存在本浏览器，不会报错白屏。
  */
 window.LMRL_CONFIG = {
-  SUPABASE_URL: "https://YOUR-PROJECT-REF.supabase.co",
-  SUPABASE_ANON_KEY: "YOUR-ANON-KEY"
+  SUPABASE_URL: "https://nhdbpmdivaptjzwjdayu.supabase.co",
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oZGJwbWRpdmFwdGp6d2pkYXl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU2NjcyNzAsImV4cCI6MjExMTI0MzI3MH0.lFcZ9K5ImiKeBSMqsnoi-491Wqnhj0-JDKiBMDGw_R8"
 };
